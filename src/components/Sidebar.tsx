@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaUserGraduate,
@@ -7,7 +7,8 @@ import {
   FaBook,
   FaCalendarAlt,
   FaClipboard,
-  FaList
+  FaList,
+  FaSignOutAlt
 } from "react-icons/fa";
 
 interface MenuItem {
@@ -28,15 +29,24 @@ const menuItems: MenuItem[] = [
 
 const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
+
+  const handleLogout = () => {
+    const confirmed = window.confirm("Are you sure you want to log out?");
+    if (confirmed) {
+      localStorage.removeItem("student");
+      navigate("/login");
+    }
+  };
 
   return (
     <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
       <button className="toggle-btn" onClick={toggleSidebar}>
         {isCollapsed ? "→" : "←"}
       </button>
-      <ul>
+      <ul className="menu-items">
         {menuItems.map((item) => (
           <li key={item.name}>
             <Link to={item.path} className="menu-link">
@@ -46,6 +56,13 @@ const Sidebar: React.FC = () => {
           </li>
         ))}
       </ul>
+      {/* Logout button always at the bottom */}
+      <div className="logout-container">
+        <button className="menu-link logout-btn" onClick={handleLogout}>
+          <span className="icon"><FaSignOutAlt /></span>
+          {!isCollapsed && <span className="text">Logout</span>}
+        </button>
+      </div>
     </aside>
   );
 };
