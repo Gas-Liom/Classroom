@@ -2,38 +2,51 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
-  const [formData, setFormData] = useState({ regnumber: "", password: "" });
-  const [message, setMessage] = useState("");
+  const [identifier, setIdentifier] = useState(""); // regnumber OR email
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     try {
+      const body: any = { password };
+      // If it looks like an email → use email, else assume regnumber
+      if (identifier.includes("@")) {
+        body.email = identifier;
+      } else {
+        body.regnumber = identifier;
+      }
+
       const res = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
-      if (data.success) {
-        setMessage(`✅ Welcome ${data.student.firstname} ${data.student.surname}`);
 
-        // Save user info (optional: localStorage/sessionStorage)
-        localStorage.setItem("student", JSON.stringify(data.student));
+      if (!data.success) {
+        setError(data.error || "Login failed");
+        return;
+      }
 
-        // Redirect to Home page
+      // Save logged in user to localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Redirect depending on role
+      if (data.user.role === "teacher") {
+        navigate("/teacher");
+      } else if (data.user.role === "student") {
         navigate("/home");
       } else {
-        setMessage("❌ " + data.error);
+        navigate("/"); // admin or fallback
       }
     } catch (err) {
-      setMessage("⚠️ Could not connect to server");
+      setError("Something went wrong. Please try again.");
+      console.error(err);
     }
   };
 
@@ -41,13 +54,23 @@ const Login: React.FC = () => {
     <div className="auth-container">
       <h2>Login</h2>
       <form className="auth-form" onSubmit={handleSubmit}>
-        <input type="text" name="regnumber" placeholder="Registration Number" required onChange={handleChange} />
-        <input type="password" name="password" placeholder="Password" required onChange={handleChange} />
+        <input
+          type="text"
+          placeholder="Registration Number or Email"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Login</button>
       </form>
-
-      {message && <p>{message}</p>}
-
+      {error && <p className="error">{error}</p>}
       <p>
         Don’t have an account? <Link to="/register">Register</Link>
       </p>

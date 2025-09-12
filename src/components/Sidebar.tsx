@@ -18,7 +18,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { name: "Home", path: "/", icon: <FaHome /> },
+  { name: "Home", path: "/home", icon: <FaHome /> },
   { name: "Students", path: "/students", icon: <FaUserGraduate /> },
   { name: "Attendance", path: "/attendance", icon: <FaClipboardList /> },
   { name: "Assessments", path: "/assessments", icon: <FaClipboard /> },

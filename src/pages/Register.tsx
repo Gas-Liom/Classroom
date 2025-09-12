@@ -1,23 +1,25 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
     firstname: "",
     surname: "",
     middlename: "",
+    email: "",
     regnumber: "",
     level_of_class: "",
-    class_teacher: "",
+    class_assigned: "",
+    role: "student",
     age: "",
     dateofbirth: "",
-    password: "",
     village: "",
+    password: "",
   });
 
-  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -31,14 +33,15 @@ const Register: React.FC = () => {
         body: JSON.stringify(formData),
       });
 
+      if (!res.ok) throw new Error("Registration failed");
       const data = await res.json();
-      if (data.success) {
-        setMessage("✅ Registration successful!");
-      } else {
-        setMessage("❌ Registration failed: " + data.error);
-      }
+
+      alert("✅ Registration successful!");
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate("/login");
     } catch (err) {
-      setMessage("⚠️ Could not connect to server.");
+      console.error("❌ Registration error:", err);
+      alert("Registration failed. Try again.");
     }
   };
 
@@ -49,19 +52,34 @@ const Register: React.FC = () => {
         <input type="text" name="firstname" placeholder="First Name" required onChange={handleChange} />
         <input type="text" name="surname" placeholder="Surname" required onChange={handleChange} />
         <input type="text" name="middlename" placeholder="Middle Name" onChange={handleChange} />
-        <input type="text" name="regnumber" placeholder="Registration Number" required onChange={handleChange} />
-        <input type="text" name="level_of_class" placeholder="Level of Class" required onChange={handleChange} />
-        <input type="text" name="class_teacher" placeholder="Class Teacher" required onChange={handleChange} />
-        <input type="number" name="age" placeholder="Age" required onChange={handleChange} />
-        <input type="date" name="dateofbirth" required onChange={handleChange} />
-        <input type="password" name="password" placeholder="Password" required onChange={handleChange} />
-        <input type="text" name="village" placeholder="Village" required onChange={handleChange} />
 
+        <select name="role" value={formData.role} onChange={handleChange} required>
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+
+        {/* Student fields */}
+        {formData.role === "student" && (
+          <>
+            <input type="text" name="regnumber" placeholder="Registration Number" required onChange={handleChange} />
+            <input type="text" name="level_of_class" placeholder="Level of Class" required onChange={handleChange} />
+            <input type="number" name="age" placeholder="Age" required onChange={handleChange} />
+            <input type="date" name="dateofbirth" required onChange={handleChange} />
+            <input type="text" name="village" placeholder="Village" required onChange={handleChange} />
+          </>
+        )}
+
+        {/* Teacher fields */}
+        {formData.role === "teacher" && (
+          <>
+            <input type="email" name="email" placeholder="Email" required onChange={handleChange} />
+            <input type="text" name="class_assigned" placeholder="Class Assigned" required onChange={handleChange} />
+          </>
+        )}
+
+        <input type="password" name="password" placeholder="Password" required onChange={handleChange} />
         <button type="submit">Register</button>
       </form>
-
-      {message && <p>{message}</p>}
-
       <p>
         Already have an account? <Link to="/login">Login</Link>
       </p>
